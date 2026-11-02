@@ -1,0 +1,183 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install frontend dependencies",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"frontend",
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build frontend",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Build API container",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"build",
+				"api"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start API",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"up",
+				"--build",
+				"-d"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect Docker ports",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"ps",
+				"--format",
+				"{{.Names}}\\t{{.Ports}}"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "List running containers",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"ps"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check local MySQL ports",
+			"type": "shell",
+			"command": "Get-NetTCPConnection",
+			"args": [
+				"-State",
+				"Listen",
+				"-LocalPort",
+				"3306",
+				"3307",
+				"3308",
+				"3309"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Read database logs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"db",
+				"--tail=80"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check MySQL health probe",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"habit_tracker-db-1",
+				"healthcheck.sh",
+				"--connect",
+				"--innodb_initialized"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check API health",
+			"type": "shell",
+			"command": "Invoke-RestMethod",
+			"args": [
+				"-Uri",
+				"http://localhost:8080/api/health"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Smoke test account and habits API",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"const email = `smoke-${Date.now()}@daymark.local`; const password = 'DaymarkSmoke123!'; const call = async (path, token, method = 'GET', body) => { const response = await fetch(`http://localhost:8080${path}`, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }); if (!response.ok) throw new Error(`${method} ${path}: ${response.status} ${await response.text()}`); return response.status === 204 ? null : response.json(); }; const auth = await call('/api/auth/register', null, 'POST', { name: 'Smoke Test', email, password, timeZone: 'Asia/Kolkata' }); const token = auth.accessToken; const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Kolkata' }).format(new Date()); const habit = await call('/api/habits', token, 'POST', { name: 'Morning reading', category: 'Mind', icon: 'book', color: 'green', goal: '20 min', weeklyTarget: 3, scheduledDays: ['MONDAY', 'WEDNESDAY', 'FRIDAY'] }); await call(`/api/habits/${habit.id}/check-ins`, token, 'POST', { date: today, completed: true }); const habits = await call('/api/habits', token); console.log(JSON.stringify({ registered: auth.user.email === email, habitCreated: habits.length === 1, checkInSaved: habits[0]?.completed === true, streak: habits[0]?.streak, scheduleDays: habits[0]?.scheduledDays.length }));"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Smoke test account and habits API retry",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"const email = `smoke-${Date.now()}@daymark.local`; const password = \"DaymarkSmoke123!\"; const call = async (path, token, method = \"GET\", body) => { const response = await fetch(`http://localhost:8080${path}`, { method, headers: { \"Content-Type\": \"application/json\", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }); if (!response.ok) throw new Error(`${method} ${path}: ${response.status} ${await response.text()}`); return response.status === 204 ? null : response.json(); }; const auth = await call(\"/api/auth/register\", null, \"POST\", { name: \"Smoke Test\", email, password, timeZone: \"Asia/Kolkata\" }); const token = auth.accessToken; const today = new Intl.DateTimeFormat(\"sv-SE\", { timeZone: \"Asia/Kolkata\" }).format(new Date()); const habit = await call(\"/api/habits\", token, \"POST\", { name: \"Morning reading\", category: \"Mind\", icon: \"book\", color: \"green\", goal: \"20 min\", weeklyTarget: 3, scheduledDays: [\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"] }); await call(`/api/habits/${habit.id}/check-ins`, token, \"POST\", { date: today, completed: true }); const habits = await call(\"/api/habits\", token); console.log(JSON.stringify({ registered: auth.user.email === email, habitCreated: habits.length === 1, checkInSaved: habits[0]?.completed === true, streak: habits[0]?.streak, scheduleDays: habits[0]?.scheduledDays.length }));"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run API smoke test",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"scripts/smoke-api.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start frontend dev server",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"frontend",
+				"run",
+				"dev",
+				"--",
+				"--host",
+				"0.0.0.0"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
